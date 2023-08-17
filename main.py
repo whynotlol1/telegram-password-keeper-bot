@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS passwords
 conn.commit()
 
 
-bot = telebot.TeleBot('5604209602:AAG0SdGNOp_Vki9A65GJRZM0fivkflp3UGw')
+bot = telebot.TeleBot('your-token')
 
 
 def encrypt(string):
