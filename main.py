@@ -52,7 +52,7 @@ def help_command(message):
                      '============================ \n'
                      '• /delete_password <service name> - remove one of your passwords if it`s no longer needed \n'
                      '============================ \n'
-                     '• /show_my_password <service> - see your password for a certain service \n'
+                     '• /show_my_password <service name> - see your password for a certain service \n'
                      '============================ \n'
                      '• /show_my_passwords - see the list of all your passwords \n'
                      '============================ \n'
