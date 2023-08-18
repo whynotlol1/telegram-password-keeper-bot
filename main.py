@@ -39,7 +39,6 @@ def decrypt(string):
 
 @bot.message_handler(commands=['start'])
 def starting(message):
-    print(message.from_user.id)
     bot.send_message(message.from_user.id, 'Hello and welcome to the Password Keeper telegram bot!')
 
 
