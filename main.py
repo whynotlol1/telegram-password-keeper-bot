@@ -144,7 +144,7 @@ def show_all_passwords(usr_id):
             password_list += f"Service: {el[1]}, Password: {el[2]}"
             password_list += '-' * 28
         bot.send_message(usr_id, f"{password_list}")
-    bot.send_message(message.from_user.id, "Anything else you would like to do?", reply_markup=mk_1)
+    bot.send_message(usr_id, "Anything else you would like to do?", reply_markup=mk_1)
 
 
 if __name__ == '__main__':
