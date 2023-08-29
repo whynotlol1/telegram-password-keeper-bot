@@ -135,7 +135,7 @@ def show_1_password_step2(message):
 
 
 def show_all_passwords(usr_id):
-    if cur.execute("SELECT * FROM passwords WHERE user_id=?", f"{usr_id}", ).fetchone() is None:
+    if cur.execute("SELECT * FROM passwords WHERE user_id=?", (f"{usr_id}", )).fetchone() is None:
         bot.send_message(usr_id, f"It seems like you don't have any passwords in your password list!")
     else:
         password_list = "Your password list:"
