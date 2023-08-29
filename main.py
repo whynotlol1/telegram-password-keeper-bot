@@ -1,7 +1,9 @@
 from secrets import choice
+from markups import *
 import telebot
 import sqlite3
 import base64
+
 
 conn = sqlite3.connect('passwords.db', check_same_thread=False)
 cur = conn.cursor()
@@ -17,10 +19,10 @@ CREATE TABLE IF NOT EXISTS passwords
 conn.commit()
 
 
-bot = telebot.TeleBot('your-token')
+bot = telebot.TeleBot('5604209602:AAHjZrPQ1yDgdLHdLta8e8vUgUYHuYPGgEI')
 
 
-def encrypt(string):
+def my_encrypt(string):
     base = 'FVr0jGy6HpAveOwdzMxPlhBYgLZNDc7saJKR52W+CQo19bkIT4iEqumSU3tn8Xf'
     for _ in range(10):
         string += f'{choice(base)}'
@@ -30,7 +32,7 @@ def encrypt(string):
     return string_encrypted
 
 
-def decrypt(string):
+def my_decrypt(string):
     base64_bytes = string.encode('ascii')
     string_bytes = base64.b64decode(base64_bytes)
     string_decrypted = string_bytes.decode('ascii')
@@ -39,92 +41,110 @@ def decrypt(string):
 
 @bot.message_handler(commands=['start'])
 def starting(message):
-    bot.send_message(message.from_user.id, 'Hello and welcome to the Password Keeper telegram bot!')
+    bot.send_message(message.from_user.id, "Hello and welcome to the Password Keeper telegram bot!")
+    bot.send_message(message.from_user.id, "Now you can start working with the bot!", reply_markup=mk_1)
 
 
-@bot.message_handler(commands=['help'])
-def help_command(message):
-    bot.send_message(message.from_user.id,
-                     'Here`s what the bot can do: \n'
-                     '============================ \n'
-                     '• /add_password <service name> - <password> - add a password to your very own secure database \n'
-                     '============================ \n'
-                     '• /delete_password <service name> - remove one of your passwords if it`s no longer needed \n'
-                     '============================ \n'
-                     '• /show_my_password <service name> - see your password for a certain service \n'
-                     '============================ \n'
-                     '• /show_my_passwords - see the list of all your passwords \n'
-                     '============================ \n'
-                     '\n\n'
-                     'If something goes wrong, please contact the developer: \n'
-                     '@cat_dev_lol on telegram or @cat_dev on discord!'
-                     )
-
-
-@bot.message_handler(commands=['add_password'])
-def add_password(message):
-    msg_content = message.text.split(' ')[1:]
-    service = ''
-    password = ''
-    for i in range(len(msg_content)):
-        if msg_content[i] != '-':
-            service += msg_content[i]
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call):
+    if call.data == "contacts":
+        send_contacts(call.message.chat.id)
+    else:
+        if call.data == "add_password":
+            start_adding_password(call.message.chat.id)
+        elif call.data == "remove_password":
+            start_removing_password(call.message.chat.id)
+        elif call.data == "see_passwords":
+            start_showing_passwords(call.message.chat.id)
         else:
-            break
-    for j in range(i + 1, len(msg_content)):
-        password += msg_content[j]
+            if call.data == "see_1_password":
+                show_1_password_step1(call.message.chat.id)
+            elif call.data == "see_all_passwords":
+                show_all_passwords(call.message.chat.id)
 
-    check = cur.execute("SELECT * FROM passwords WHERE user_id=? AND service=?", (f"{str(message.from_user.id)}", f"{service}")).fetchone()
-    if check is None:
-        cur.execute("INSERT INTO passwords VALUES (?,?,?)", (f"{str(message.from_user.id)}", f"{service}", f"{encrypt(password)}"))
+
+def send_contacts(usr_id):
+    bot.send_message(usr_id, "If you believe the bot is not functioning as intended "
+                             "or if you want to contribute to the project to make it better, here are the developer's contacts:\n"
+                             "Discord: @cat_dev\n"
+                             "Telegram: @cat_dev_lol",
+                     reply_markup=mk_2)
+
+
+def start_adding_password(usr_id):
+    bot.send_message(usr_id, "Ok, let's add a password to your password list.")
+    msg = bot.send_message(usr_id, "What service do you use this password for?"
+                                   " (Keep in mind that you can only keep one password for each service."
+                                   " If you use multiple accounts, add them as shown in this example: Amazon; Amazon1; Amazon2 etc.)")
+    bot.register_next_step_handler(msg, adding_password_step2)
+
+
+def adding_password_step2(message):
+    if cur.execute("SELECT * FROM passwords WHERE user_id=? AND service=?", (f"{message.from_user.id}", f"{message.text}")).fetchone() is not None:
+        msg = bot.send_message(message.from_user.id, f"Sorry, but it seems like you already have a password for {message.text} in your password list!\n"
+                                                     f"Try adding the password again with another service name!")
+        bot.register_next_step_handler(msg, adding_password_step2)
+    else:
+        cur.execute("INSERT INTO passwords (user_id, service) VALUES (?,?)", (f"{message.from_user.id}", f"{message.text}"))
         conn.commit()
-        bot.send_message(message.from_user.id, f'Successfully added a password for {service} to your password database!')
-    else:
-        bot.send_message(message.from_user.id, f'Sorry, but it seems like you already have a password for {service} in your password database. The service name must be unique for every password!')
+        msg = bot.send_message(message.from_user.id, f"Now, what is the password?"
+                                                     f" (The bot will only store the password after it is encrypted so"
+                                                     f" even if somebody gets it, it will be hard for them to decrypt correctly)")
+        bot.register_next_step_handler(msg, adding_password_final_step, message.text)
 
 
-@bot.message_handler(commands=['remove_password'])
-def remove_password(message):
-    msg_content = message.text.split(' ')[1:]
-    service = ''
-    for i in range(len(msg_content)):
-        service += msg_content[i]
-    check = cur.execute("SELECT * FROM passwords WHERE user_id=? AND service=?", (f"{str(message.from_user.id)}", f"{service}")).fetchone()
-    if check is None:
-        bot.send_message(message.from_user.id, f'Sorry, but it seems like you didn`t add a password for {service} to your password database so there`s no need to remove it!')
+def adding_password_final_step(message, service):
+    cur.execute("UPDATE passwords SET password=? WHERE user_id=? AND service=?", (f"{my_encrypt(message.text)}", f"{message.from_user.id}", f"{service}"))
+    conn.commit()
+    bot.send_message(message.from_user.id, f"Added a password for {service} to your password list successfully!")
+    bot.send_message(message.from_user.id, "Anything else you would like to do?", reply_markup=mk_1)
+
+
+def start_removing_password(usr_id):
+    bot.send_message(usr_id, "Ok, let's remove a password from your password list.")
+    msg = bot.send_message(usr_id, "What service did you use this password for?")
+    bot.register_next_step_handler(msg, removing_password_step2)
+
+
+def removing_password_step2(message):
+    if cur.execute("SELECT * FROM passwords WHERE user_id=? AND service=?", (f"{message.from_user.id}", f"{message.text}")).fetchone() is None:
+        bot.send_message(message.from_user.id, f"It seems like you didn't add a password for {message.text} to your password list before!")
     else:
-        cur.execute("DELETE FROM passwords WHERE user_id=? AND service=?", (f"{str(message.from_user.id)}", f"{service}"))
+        cur.execute("DELETE FROM passwords WHERE user_id=? AND service=?", (f"{message.from_user.id}", f"{message.text}"))
         conn.commit()
-        bot.send_message(message.from_user.id, f'Successfully removed a password for {service} from your password database!')
+        bot.send_message(message.from_user.id, f"Removed a password for {message.text} from your password list successfully!")
+    bot.send_message(message.from_user.id, "Anything else you would like to do?", reply_markup=mk_1)
 
 
-@bot.message_handler(commands=['show_my_password'])
-def show_1_pass(message):
-    msg_content = message.text.split(' ')[1:]
-    service = ''
-    for i in range(len(msg_content)):
-        service += msg_content[i]
+def start_showing_passwords(usr_id):
+    bot.send_message(usr_id, "Do you want to see your password for a given service or a list of all your passwords?", reply_markup=mk_3)
 
-    password = cur.execute("SELECT * FROM passwords WHERE user_id=? AND service=?", (f"{str(message.from_user.id)}", f"{service}")).fetchone()
-    if password is None:
-        bot.send_message(message.from_user.id, f'Sorry, but it seems like you don`t have a password for {service}!')
+
+def show_1_password_step1(usr_id):
+    msg = bot.send_message(usr_id, "Which of your services password do you want to see?")
+    bot.register_next_step_handler(msg, show_1_password_step2)
+
+
+def show_1_password_step2(message):
+    if cur.execute("SELECT * FROM passwords WHERE user_id=? AND service=?", (f"{message.from_user.id}", f"{message.text}")).fetchone() is None:
+        bot.send_message(message.from_user.id, f"It seems like you don't have a password for {message.text} in your password list!")
     else:
-        bot.send_message(message.from_user.id, f'Your password for {service} is: {decrypt(password[2])}')
+        password = my_decrypt(cur.execute("SELECT * FROM passwords WHERE user_id=? AND service=?", (f"{message.from_user.id}", f"{message.text}")).fetchone()[2])
+        bot.send_message(message.from_user.id, f"Your password for {message.text} is: {password}")
+    bot.send_message(message.from_user.id, "Anything else you would like to do?", reply_markup=mk_1)
 
 
-@bot.message_handler(commands=['show_my_passwords'])
-def show_all_passes(message):
-    check = cur.execute("SELECT * FROM passwords WHERE user_id=?", (f"{str(message.from_user.id)}",)).fetchone()
-    if check is None:
-        bot.send_message(message.from_user.id, f'Sorry, but it seems like you don`t have any passwords in your password database!')
+def show_all_passwords(usr_id):
+    if cur.execute("SELECT * FROM passwords WHERE user_id=?", f"{usr_id}", ).fetchone() is None:
+        bot.send_message(usr_id, f"It seems like you don't have any passwords in your password list!")
     else:
-        passes = cur.execute("SELECT * FROM passwords WHERE user_id=?", (f"{str(message.from_user.id)}",)).fetchall()
-        string = 'Here`s the list of all your passwords: \n'
-        for el in passes:
-            string += '-' * 28 + '\n'
-            string += f'• {el[1]}: {el[2]} \n'
-            string += '-' * 28 + '\n'
-        bot.send_message(message.from_user.id, f'{string}')
+        password_list = "Your password list:"
+        password_list += '-' * 28
+        for el in cur.execute("SELECT * FROM passwords WHERE user_id=?", f"{usr_id}", ).fetchall():
+            password_list += f"Service: {el[1]}, Password: {el[2]}"
+            password_list += '-' * 28
+        bot.send_message(usr_id, f"{password_list}")
+    bot.send_message(message.from_user.id, "Anything else you would like to do?", reply_markup=mk_1)
 
 
 if __name__ == '__main__':
