@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS passwords
 conn.commit()
 
 
-bot = telebot.TeleBot('token')
+bot = telebot.TeleBot('5604209602:AAHjZrPQ1yDgdLHdLta8e8vUgUYHuYPGgEI')
 
 
 def my_encrypt(string):
@@ -140,7 +140,7 @@ def show_all_passwords(usr_id):
     else:
         password_list = "Your password list:"
         password_list += '-' * 28
-        for el in cur.execute("SELECT * FROM passwords WHERE user_id=?", f"{usr_id}", ).fetchall():
+        for el in cur.execute("SELECT * FROM passwords WHERE user_id=?", (f"{usr_id}", )).fetchall():
             password_list += f"Service: {el[1]}, Password: {el[2]}"
             password_list += '-' * 28
         bot.send_message(usr_id, f"{password_list}")
