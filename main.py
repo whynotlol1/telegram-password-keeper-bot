@@ -138,11 +138,11 @@ def show_all_passwords(usr_id):
     if cur.execute("SELECT * FROM passwords WHERE user_id=?", (f"{usr_id}", )).fetchone() is None:
         bot.send_message(usr_id, f"It seems like you don't have any passwords in your password list!")
     else:
-        password_list = "Your password list:"
-        password_list += '-' * 28
+        password_list = "Your password list:\n"
+        password_list += '-' * 28 + '\n'
         for el in cur.execute("SELECT * FROM passwords WHERE user_id=?", (f"{usr_id}", )).fetchall():
-            password_list += f"Service: {el[1]}, Password: {el[2]}"
-            password_list += '-' * 28
+            password_list += f"Service: {el[1]}, Password: {my_decrypt(el[2])}\n"
+            password_list += '-' * 28 + '\n'
         bot.send_message(usr_id, f"{password_list}")
     bot.send_message(usr_id, "Anything else you would like to do?", reply_markup=mk_1)
 
