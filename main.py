@@ -5,7 +5,7 @@ import sqlite3
 import base64
 
 
-conn = sqlite3.connect('passwords.db', check_same_thread=False)
+conn = sqlite3.connect('passwords.db', check_same_thread=False)  # you don't need to create the passwords.db file yourself
 cur = conn.cursor()
 
 cur.execute("""
@@ -17,9 +17,10 @@ CREATE TABLE IF NOT EXISTS passwords
 )
 """)
 conn.commit()
+print('[Debug]: SQL connection acquired!')
 
-
-bot = telebot.TeleBot('token')
+with open('token.txt', 'r') as f:  # you need to create the token.txt file yourself
+    bot = telebot.TeleBot(f.readline())
 
 
 def my_encrypt(string):
@@ -148,4 +149,5 @@ def show_all_passwords(usr_id):
 
 
 if __name__ == '__main__':
+    print('[Debug]: Bot is running!')
     bot.polling(none_stop=True, interval=0)
