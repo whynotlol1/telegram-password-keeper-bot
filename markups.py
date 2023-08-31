@@ -3,7 +3,7 @@ from telebot import types
 mk_1 = types.InlineKeyboardMarkup()
 mk_1.row(
     types.InlineKeyboardButton(text="Add password", callback_data="add_password"),
-    types.InlineKeyboardButton(text="Remove password", callback_data="remove_password"),
+    types.InlineKeyboardButton(text="Remove password", callback_data="remove_password")
 )
 mk_1.add(types.InlineKeyboardButton(text="See my passwords", callback_data="see_passwords"))
 mk_1.add(types.InlineKeyboardButton(text="Contact developer", callback_data="contacts"))
