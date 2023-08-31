@@ -6,7 +6,7 @@ mk_1.row(
     types.InlineKeyboardButton(text="Remove password", callback_data="remove_password"),
 )
 mk_1.add(types.InlineKeyboardButton(text="See my passwords", callback_data="see_passwords"))
-mk_1.add(types.InlineKeyboardButton(text="Contact developer", callback_data="contacts"),)
+mk_1.add(types.InlineKeyboardButton(text="Contact developer", callback_data="contacts"))
 
 
 mk_2 = types.InlineKeyboardMarkup()
