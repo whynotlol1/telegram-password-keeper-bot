@@ -48,20 +48,19 @@ def starting(message):
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
-    if call.data == "contacts":
-        send_contacts(call.message.chat.id)
-    else:
-        if call.data == "add_password":
+    match call.data:  # since python 3.10 match-case can be used instead of multiple elif's. works the same way as switch-case in java
+        case "contacts":
+            send_contacts(call.message.chat.id)
+        case "add_password":
             start_adding_password(call.message.chat.id)
-        elif call.data == "remove_password":
+        case "remove_password":
             start_removing_password(call.message.chat.id)
-        elif call.data == "see_passwords":
+        case "see_passwords":
             start_showing_passwords(call.message.chat.id)
-        else:
-            if call.data == "see_1_password":
-                show_1_password_step1(call.message.chat.id)
-            elif call.data == "see_all_passwords":
-                show_all_passwords(call.message.chat.id)
+        case "see_1_password":
+            show_1_password_step1(call.message.chat.id)
+        case "see_all_passwords":
+            show_all_passwords(call.message.chat.id)
 
 
 def send_contacts(usr_id):
